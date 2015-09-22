@@ -1,0 +1,84 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.IO.Ports;
+using System.Threading;
+
+public class ArduinoGyro : MonoBehaviour {
+	private static float RAD_TO_DEG = 180f / Mathf.PI;
+
+	public string comPortName;
+	public GameObject ControlOrientation;
+	public GameObject ControlPosition;
+
+	private SerialPort _serialPort;
+	private Vector3 _initialOrientation = Vector3.zero;
+	private Rigidbody _rigidBody;
+
+	private Vector3 ParseYawPitchRoll(float yaw, float pitch, float roll) {
+		return new Vector3 (pitch, yaw, roll) - _initialOrientation;
+	}
+
+	private float GetSectionCoefficient (float orientationDegrees) {
+		return (Mathf.Sin (orientationDegrees / RAD_TO_DEG)) / (Mathf.Cos (orientationDegrees / RAD_TO_DEG));
+	}
+
+	// Use this for initialization
+	void Start () {
+		bool initialized = false;
+
+		_rigidBody = GetComponent<Rigidbody>();
+
+		// Create a new SerialPort object.
+		_serialPort = new SerialPort (comPortName, 115200, Parity.None, 8, StopBits.One);
+		_serialPort.Open ();
+		while (!initialized) {
+			_serialPort.Write ("g");
+			string message = _serialPort.ReadLine();
+			string[] messageParts = message.Split ('\t');
+
+			if (messageParts.Length == 4 && messageParts[0].Equals("ypr")) {
+				_initialOrientation = ParseYawPitchRoll(
+					float.Parse (messageParts [1]),
+					float.Parse (messageParts [2]),
+					float.Parse (messageParts [3]));
+				initialized = true;
+			}
+		}
+	}
+
+	// Update is called once per frame
+	void FixedUpdate() {
+		float forceScaler = 0.1f;
+
+		Vector3 currentOrientation;
+		Vector3 force = Vector3.zero;
+		Vector3 velocity = Vector3.zero;
+		float direction = 0;
+
+		_serialPort.Write ("g");
+		string message = _serialPort.ReadLine();
+
+		string[] messageParts = message.Split ('\t');
+
+		if (messageParts.Length == 4 && messageParts[0].Equals("ypr")) {
+			// Orientation on debug object
+			currentOrientation = ParseYawPitchRoll(
+				float.Parse (messageParts [1]),
+				float.Parse (messageParts [2]),
+				float.Parse (messageParts [3]));
+			ControlOrientation.transform.eulerAngles = currentOrientation;
+
+			// Position and orientation on Parent
+			force.z = - forceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.x);
+			force.x = forceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.z);
+
+			_rigidBody.AddForce(force);
+
+			velocity = _rigidBody.velocity;
+			velocity.y = 0;
+
+			direction = Mathf.Sign(velocity.x) * Mathf.Acos(Vector3.Dot(Vector3.forward, velocity.normalized));
+			ControlPosition.transform.eulerAngles = new Vector3(0, direction * RAD_TO_DEG, 0);
+		}
+	}
+}
