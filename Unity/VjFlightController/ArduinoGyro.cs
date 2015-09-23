@@ -48,11 +48,13 @@ public class ArduinoGyro : MonoBehaviour {
 
 	// Update is called once per frame
 	void FixedUpdate() {
-		float forceScaler = 0.1f;
+		float orientationForceScaler = 0.1f;
 
 		Vector3 currentOrientation;
 		Vector3 force = Vector3.zero;
+		Vector3 directionalForce;
 		Vector3 velocity = Vector3.zero;
+		Vector3 flightDirection = Vector3.zero;
 		float direction = 0;
 
 		_serialPort.Write ("g");
@@ -68,14 +70,22 @@ public class ArduinoGyro : MonoBehaviour {
 				float.Parse (messageParts [3]));
 			ControlOrientation.transform.eulerAngles = currentOrientation;
 
-			// Position and orientation on Parent
-			force.z = - forceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.x);
-			force.x = forceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.z);
+			// Fetch current flight direction
+			flightDirection = _rigidBody.velocity.normalized;
 
-			_rigidBody.AddForce(force);
-
+			// Get velocity in X-Z Plane
 			velocity = _rigidBody.velocity;
 			velocity.y = 0;
+
+			// TODO: Calcultae all forces acting on the player
+			force.z = - orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.x);
+			force.x = orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.z);
+			force.x += orientationForceScaler * velocity.magnitude * Mathf.Sin(currentOrientation.y / RAD_TO_DEG);
+
+			// Apply forces
+			_rigidBody.AddForce(force);
+
+			// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
 
 			direction = Mathf.Sign(velocity.x) * Mathf.Acos(Vector3.Dot(Vector3.forward, velocity.normalized));
 			ControlPosition.transform.eulerAngles = new Vector3(0, direction * RAD_TO_DEG, 0);
