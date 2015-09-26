@@ -22,14 +22,28 @@ public class ArduinoGyro : MonoBehaviour {
 		return (Mathf.Sin (orientationDegrees / RAD_TO_DEG)) / (Mathf.Cos (orientationDegrees / RAD_TO_DEG));
 	}
 
-	private Vector3 GetCurrentOrientation() {
+	private string[] RequestDataFromArduino(char datatype) {
+		string[] ret = {};
+		string message = "";
+		string datatypeStr = datatype + "";
+
+		if (!_serialPort.IsOpen)
+			return ret;
+
+		_serialPort.Write (datatypeStr);
+		message = _serialPort.ReadLine();
+
+		Debug.Log("Requested: " + datatype + " Got message: " + message);
+
+		return message.Split ('\t');
+	}
+
+	private Vector3 GetArduinoData(char datatype) {
 		Vector3 ret = Vector3.zero;
 
-		_serialPort.Write ("g");
-		string message = _serialPort.ReadLine();
-		string[] messageParts = message.Split ('\t');
+		string[] messageParts = RequestDataFromArduino(datatype);
 
-		if (messageParts.Length == 4 && messageParts[0].Equals("ypr")) {
+		if (messageParts.Length == 4 && messageParts[0].Equals(datatype.ToString())) {
 			// Orientation on debug object
 			ret = ParseYawPitchRoll(
 				float.Parse (messageParts [1]),
@@ -39,68 +53,48 @@ public class ArduinoGyro : MonoBehaviour {
 
 		return ret;
 	}
+
 	// Use this for initialization
 	void Start () {
-		bool initialized = false;
-
 		_rigidBody = GetComponent<Rigidbody>();
 
 		// Create a new SerialPort object.
 		_serialPort = new SerialPort (comPortName, 115200, Parity.None, 8, StopBits.One);
 		_serialPort.Open ();
-		while (!initialized) {
-			_serialPort.Write ("g");
-			string message = _serialPort.ReadLine();
-			string[] messageParts = message.Split ('\t');
-
-			if (messageParts.Length == 4 && messageParts[0].Equals("ypr")) {
-				_initialOrientation = ParseYawPitchRoll(
-					float.Parse (messageParts [1]),
-					float.Parse (messageParts [2]),
-					float.Parse (messageParts [3]));
-				initialized = true;
-			}
-		}
-	}
-
-	// Update is called once per frame
-	void Update() {
-		Vector3 velocity = Vector3.zero;
-		float direction = 0;
-
-		velocity = _rigidBody.velocity;
-		velocity.y = 0;
-
-		// Apply orientation
-		ControlOrientation.transform.eulerAngles = GetCurrentOrientation();
-
-		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
-		direction = Mathf.Sign(velocity.x) * Mathf.Acos(Vector3.Dot(Vector3.forward, velocity.normalized));
-		ControlPosition.transform.eulerAngles = new Vector3(0, direction * RAD_TO_DEG, 0);
 	}
 
 	// FixedUpdate to simulate aerodynamics
 	void FixedUpdate() {
 		float orientationForceScaler = 0.1f;
+		float accelerationScaler = 0.001f;
 		Vector3 force = Vector3.zero;
+		float direction = 0;
 
 		Vector3 currentOrientation;
 		Vector3 frontFace;
 		Vector3 velocity;
 
-		currentOrientation = GetCurrentOrientation();
+		currentOrientation = GetArduinoData('g');
+		ControlOrientation.transform.eulerAngles = currentOrientation;
 
 		// Get velocity in X-Z Plane
 		velocity = _rigidBody.velocity;
 		velocity.y = 0;
 
-		// TODO: Calcultae all forces acting on the player
+		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
+		direction = Mathf.Sign(velocity.x) * Mathf.Acos(Vector3.Dot(Vector3.forward, velocity.normalized));
+		ControlPosition.transform.eulerAngles = new Vector3(0, direction * RAD_TO_DEG, 0);
+
+		// Apply air resistance forces
 		force.z = - orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.x);
 		force.x = orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.z);
 		force.x += orientationForceScaler * velocity.magnitude * Mathf.Sin(currentOrientation.y / RAD_TO_DEG);
-
-		// Apply forces
 		frontFace = velocity.normalized + (Quaternion.AngleAxis(currentOrientation.y, Vector3.up) * Vector3.forward);
 		_rigidBody.AddForce(frontFace.normalized * force.magnitude);
+
+		// TODO: Calcultae all forces acting on the player
+
+		// Apply acceleration forces
+		_rigidBody.AddForce(GetArduinoData('a') * accelerationScaler);
 	}
 }
