@@ -22,6 +22,23 @@ public class ArduinoGyro : MonoBehaviour {
 		return (Mathf.Sin (orientationDegrees / RAD_TO_DEG)) / (Mathf.Cos (orientationDegrees / RAD_TO_DEG));
 	}
 
+	private Vector3 GetCurrentOrientation() {
+		Vector3 ret = Vector3.zero;
+
+		_serialPort.Write ("g");
+		string message = _serialPort.ReadLine();
+		string[] messageParts = message.Split ('\t');
+
+		if (messageParts.Length == 4 && messageParts[0].Equals("ypr")) {
+			// Orientation on debug object
+			ret = ParseYawPitchRoll(
+				float.Parse (messageParts [1]),
+				float.Parse (messageParts [2]),
+				float.Parse (messageParts [3]));
+		}
+
+		return ret;
+	}
 	// Use this for initialization
 	void Start () {
 		bool initialized = false;
@@ -47,48 +64,43 @@ public class ArduinoGyro : MonoBehaviour {
 	}
 
 	// Update is called once per frame
-	void FixedUpdate() {
-		float orientationForceScaler = 0.1f;
-
-		Vector3 currentOrientation;
-		Vector3 force = Vector3.zero;
-		Vector3 directionalForce;
+	void Update() {
 		Vector3 velocity = Vector3.zero;
-		Vector3 flightDirection = Vector3.zero;
 		float direction = 0;
 
-		_serialPort.Write ("g");
-		string message = _serialPort.ReadLine();
+		velocity = _rigidBody.velocity;
+		velocity.y = 0;
 
-		string[] messageParts = message.Split ('\t');
+		// Apply orientation
+		ControlOrientation.transform.eulerAngles = GetCurrentOrientation();
 
-		if (messageParts.Length == 4 && messageParts[0].Equals("ypr")) {
-			// Orientation on debug object
-			currentOrientation = ParseYawPitchRoll(
-				float.Parse (messageParts [1]),
-				float.Parse (messageParts [2]),
-				float.Parse (messageParts [3]));
-			ControlOrientation.transform.eulerAngles = currentOrientation;
+		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
+		direction = Mathf.Sign(velocity.x) * Mathf.Acos(Vector3.Dot(Vector3.forward, velocity.normalized));
+		ControlPosition.transform.eulerAngles = new Vector3(0, direction * RAD_TO_DEG, 0);
+	}
 
-			// Fetch current flight direction
-			flightDirection = _rigidBody.velocity.normalized;
+	// FixedUpdate to simulate aerodynamics
+	void FixedUpdate() {
+		float orientationForceScaler = 0.1f;
+		Vector3 force = Vector3.zero;
 
-			// Get velocity in X-Z Plane
-			velocity = _rigidBody.velocity;
-			velocity.y = 0;
+		Vector3 currentOrientation;
+		Vector3 frontFace;
+		Vector3 velocity;
 
-			// TODO: Calcultae all forces acting on the player
-			force.z = - orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.x);
-			force.x = orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.z);
-			force.x += orientationForceScaler * velocity.magnitude * Mathf.Sin(currentOrientation.y / RAD_TO_DEG);
+		currentOrientation = GetCurrentOrientation();
 
-			// Apply forces
-			_rigidBody.AddForce(force);
+		// Get velocity in X-Z Plane
+		velocity = _rigidBody.velocity;
+		velocity.y = 0;
 
-			// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
+		// TODO: Calcultae all forces acting on the player
+		force.z = - orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.x);
+		force.x = orientationForceScaler * _rigidBody.velocity.y * GetSectionCoefficient(currentOrientation.z);
+		force.x += orientationForceScaler * velocity.magnitude * Mathf.Sin(currentOrientation.y / RAD_TO_DEG);
 
-			direction = Mathf.Sign(velocity.x) * Mathf.Acos(Vector3.Dot(Vector3.forward, velocity.normalized));
-			ControlPosition.transform.eulerAngles = new Vector3(0, direction * RAD_TO_DEG, 0);
-		}
+		// Apply forces
+		frontFace = velocity.normalized + (Quaternion.AngleAxis(currentOrientation.y, Vector3.up) * Vector3.forward);
+		_rigidBody.AddForce(frontFace.normalized * force.magnitude);
 	}
 }
