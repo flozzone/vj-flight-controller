@@ -114,11 +114,11 @@ void sendData() {
         break;
       case 'g':
         Serial.print("g\t");
-        Serial.print(ypr[0]);
+        Serial.print(ypr[0] * 180 / M_PI);
         Serial.print("\t");
-        Serial.print(ypr[1]);
+        Serial.print(ypr[1]  * 180 / M_PI);
         Serial.print("\t");
-        Serial.println(ypr[2]);
+        Serial.println(ypr[2]  * 180 / M_PI);
         break;
       case 'a':
         Serial.print("a\t");
@@ -142,7 +142,6 @@ void sendData() {
 void setup() {
   // Enable Watchdog
   wdt_disable();
-  delay(2L * 1000L);
   wdt_enable(WDTO_4S);
 
   // join I2C bus

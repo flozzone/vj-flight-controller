@@ -6,7 +6,7 @@ using System.Threading;
 
 public class ArduinoGyro : ArduinoBase {
 	public const float RAD_TO_DEG = 180f / Mathf.PI;
-	public static Vector3 INVALID_VALUE = new Vector3(10, 10, 10);
+	public static Vector3 INVALID_VALUE = Vector3.zero;
 	private float orientationForceScaler = 1f;
 
 	public bool _aerodynamics = true;
@@ -29,7 +29,7 @@ public class ArduinoGyro : ArduinoBase {
 				float.Parse (messageParts [2]),
 				float.Parse (messageParts [1]),
 				float.Parse (messageParts [3])
-			) * RAD_TO_DEG;
+			);
 
 			return ret - _initialOrientation;
 		}
@@ -58,7 +58,6 @@ public class ArduinoGyro : ArduinoBase {
 
 		// Apply orientation to the object
 		yawPitchRoll = ParseYawPitchRoll(RequestDataFromArduino('g'));
-
 		if (yawPitchRoll.Equals(INVALID_VALUE))
 			return;
 
