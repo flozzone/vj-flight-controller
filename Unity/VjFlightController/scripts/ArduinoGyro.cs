@@ -6,7 +6,7 @@ using System.Threading;
 
 public class ArduinoGyro : ArduinoBase {
 	public const float RAD_TO_DEG = 180f / Mathf.PI;
-
+	public static Vector3 INVALID_VALUE = new Vector3(10, 10, 10);
 	private float orientationForceScaler = 1f;
 
 	public bool _aerodynamics = true;
@@ -15,23 +15,26 @@ public class ArduinoGyro : ArduinoBase {
 	public GameObject _controlPosition;
 	public GameObject _frontFace;
 		
-	private Vector3 _initialOrientation = Vector3.zero;
+	private Vector3 _initialOrientation = INVALID_VALUE;
 
 	protected float GetSectionCoefficient (float orientationDegrees) {
 		return (Mathf.Sin (orientationDegrees / RAD_TO_DEG)) / (Mathf.Cos (orientationDegrees / RAD_TO_DEG));
 	}
 
 	private Vector3 ParseYawPitchRoll(string[] messageParts) {
-		Vector3 ret = Vector3.zero;
+		Vector3 ret = INVALID_VALUE;
 
-		if (messageParts.Length == 4 && "g".Equals(messageParts[0]))
+		if (messageParts.Length == 4 && "g".Equals(messageParts[0])) {
 			ret = new Vector3 (
 				float.Parse (messageParts [2]),
 				float.Parse (messageParts [1]),
 				float.Parse (messageParts [3])
-			);
+			) * RAD_TO_DEG;
 
-		return ret - _initialOrientation;
+			return ret - _initialOrientation;
+		}
+
+		return ret;
 	}
 
 	private Vector3 GetXzVelocity() {
@@ -44,7 +47,7 @@ public class ArduinoGyro : ArduinoBase {
 		base.InitSerial();
 
 		//Save initial orientation
-		while (_initialOrientation.Equals(Vector3.zero))
+		while (_initialOrientation.Equals(INVALID_VALUE))
 			_initialOrientation = ParseYawPitchRoll(RequestDataFromArduino('g'));
 	}
 
@@ -55,6 +58,10 @@ public class ArduinoGyro : ArduinoBase {
 
 		// Apply orientation to the object
 		yawPitchRoll = ParseYawPitchRoll(RequestDataFromArduino('g'));
+
+		if (yawPitchRoll.Equals(INVALID_VALUE))
+			return;
+
 		_controlOrientation.transform.localEulerAngles = yawPitchRoll;
 
 		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.

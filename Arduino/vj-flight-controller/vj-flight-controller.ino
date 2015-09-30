@@ -114,11 +114,11 @@ void sendData() {
         break;
       case 'g':
         Serial.print("g\t");
-        Serial.print(ypr[0] * 180 / M_PI);
+        Serial.print(ypr[0]);
         Serial.print("\t");
-        Serial.print(ypr[1] * 180 / M_PI);
+        Serial.print(ypr[1]);
         Serial.print("\t");
-        Serial.println(ypr[2] * 180 / M_PI);
+        Serial.println(ypr[2]);
         break;
       case 'a':
         Serial.print("a\t");
