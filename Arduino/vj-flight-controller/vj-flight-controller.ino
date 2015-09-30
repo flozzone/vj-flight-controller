@@ -100,21 +100,43 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
-// packet structure for InvenSense teapot demo
-uint8_t teapotPacket[14] = { '$', 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0x00, 0x00, '\r', '\n' };
-
-
 
 // ================================================================
-// ===               INTERRUPT DETECTION ROUTINE                ===
+// ===                      Helper                              ===
 // ================================================================
 
-volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
-void dmpDataReady() {
-  mpuInterrupt = true;
+void sendData() {
+    char command;
+
+  if (Serial.available()) {
+    command = Serial.read();
+    switch (command) {
+      case 'i':
+        Serial.println("i\ttrue");
+        break;
+      case 'g':
+        Serial.print("g\t");
+        Serial.print(ypr[0] * 180 / M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[1] * 180 / M_PI);
+        Serial.print("\t");
+        Serial.println(ypr[2] * 180 / M_PI);
+        break;
+      case 'a':
+        Serial.print("a\t");
+        Serial.print(aaWorld.x);
+        Serial.print("\t");
+        Serial.print(aaWorld.y);
+        Serial.print("\t");
+        Serial.println(aaWorld.z);
+        break;
+      default:
+        Serial.print("ERROR - Command ");
+        Serial.print(command);
+        Serial.println(" unknown!");
+    }
+  }
 }
-
-
 
 // ================================================================
 // ===                      INITIAL SETUP                       ===
@@ -130,16 +152,7 @@ void setup() {
 #endif
 
   // initialize serial communication
-  // (115200 chosen because it is required for Teapot Demo output, but it's
-  // really up to you depending on your project)
-  Serial.begin(115200);
-  while (!Serial); // wait for Leonardo enumeration, others continue immediately
-
-  // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3v or Ardunio
-  // Pro Mini running at 3.3v, cannot handle this baud rate reliably due to
-  // the baud timing being too misaligned with processor ticks. You must use
-  // 38400 or slower in these cases, or use some kind of external separate
-  // crystal solution for the UART timer.
+  Serial.begin(250000);
 
   // initialize device
   Serial.println(F("Initializing I2C devices..."));
@@ -153,25 +166,14 @@ void setup() {
   Serial.println(F("Initializing DMP..."));
   devStatus = mpu.dmpInitialize();
 
-  // supply your own gyro offsets here, scaled for min sensitivity
-  //mpu.setXGyroOffset(220);
-  //mpu.setYGyroOffset(-376);
-  //mpu.setZGyroOffset(-85);
-  //mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
-
   // make sure it worked (returns 0 if so)
   if (devStatus == 0) {
     // turn on the DMP, now that it's ready
     Serial.println(F("Enabling DMP..."));
     mpu.setDMPEnabled(true);
 
-    // enable Arduino interrupt detection
-    Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
-    attachInterrupt(digitalPinToInterrupt(3), dmpDataReady, RISING);
-    mpuIntStatus = mpu.getIntStatus();
-
     // set our DMP Ready flag so the main loop() function knows it's okay to use it
-    Serial.println(F("DMP ready! Waiting for first interrupt..."));
+    Serial.println(F("DMP ready! Waiting for request"));
     dmpReady = true;
 
     // get expected DMP packet size for later comparison
@@ -199,13 +201,9 @@ void setup() {
 // ================================================================
 
 void loop() {
-  char command;
-
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
 
-  // reset interrupt flag and get INT_STATUS byte
-  mpuInterrupt = false;
   mpuIntStatus = mpu.getIntStatus();
 
   // get current FIFO count
@@ -213,9 +211,9 @@ void loop() {
 
   // check for overflow (this should never happen unless our code is too inefficient)
   if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+    Serial.println(F("FIFO overflow!"));
     // reset so we can continue cleanly
     mpu.resetFIFO();
-    Serial.println(F("FIFO overflow!"));
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
   } else if (mpuIntStatus & 0x02) {
     // wait for correct available data length, should be a VERY short wait
@@ -236,37 +234,10 @@ void loop() {
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
 
-    if (Serial.available()) {
-      command = Serial.read();
-      switch (command) {
-        case 'i':
-          Serial.println("i\ttrue");
-          break;
-        case 'g':
-          Serial.print("g\t");
-          Serial.print(ypr[0] * 180 / M_PI);
-          Serial.print("\t");
-          Serial.print(ypr[1] * 180 / M_PI);
-          Serial.print("\t");
-          Serial.println(ypr[2] * 180 / M_PI);
-          break;
-        case 'a':
-          Serial.print("a\t");
-          Serial.print(aaWorld.x);
-          Serial.print("\t");
-          Serial.print(aaWorld.y);
-          Serial.print("\t");
-          Serial.println(aaWorld.z);
-          break;
-        default:
-          Serial.print("ERROR - Command ");
-          Serial.print(command);
-          Serial.println(" unknown!");
-      }
-
-      // blink LED to indicate activity
-      blinkState = !blinkState;
-      digitalWrite(LED_PIN, blinkState);
-    }
+    // blink LED to indicate activity
+    blinkState = !blinkState;
+    digitalWrite(LED_PIN, blinkState);
   }
+
+  sendData();
 }
