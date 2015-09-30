@@ -139,15 +139,11 @@ void sendData() {
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
-void enableWatchdog() {
-  // Watchdog - TODO: Lower
+void setup() {
+  // Enable Watchdog
   wdt_disable();
   delay(2L * 1000L);
   wdt_enable(WDTO_4S);
-}
-
-void setup() {
-  enableWatchdog();
 
   // join I2C bus
   Wire.begin();
@@ -194,6 +190,10 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
 
   while (Serial.available() && Serial.read()); // empty buffer
+
+  // Lower to 500msec
+  wdt_disable();
+  wdt_enable(WDTO_60MS);
 }
 
 
