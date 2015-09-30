@@ -32,7 +32,7 @@ public class ArduinoBase : MonoBehaviour {
 
 	protected void InitSerial() {
 		// Create a new SerialPort object.
-		_serialPort = new SerialPort (comPortName, 112500);
+		_serialPort = new SerialPort (comPortName, 115200);
 		_serialPort.ReadTimeout = _SerialReadTimeout;
 		_serialPort.Open ();
 		_rigidBody = GetComponent<Rigidbody>();
