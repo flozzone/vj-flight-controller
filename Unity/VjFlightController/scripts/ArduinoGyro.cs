@@ -46,7 +46,6 @@ public class ArduinoGyro : ArduinoBase {
 		//Save initial orientation
 		while (_initialOrientation.Equals(Vector3.zero))
 			_initialOrientation = ParseYawPitchRoll(RequestDataFromArduino('g'));
-
 	}
 
 	void FixedUpdate() {
@@ -95,7 +94,6 @@ public class ArduinoGyro : ArduinoBase {
 		force.z = orientationForceScaler * GetRigidBody().velocity.y * GetSectionCoefficient(yawPitchRoll.x);
 		// Move sideways on Roll
 		force.x = orientationForceScaler * GetRigidBody().velocity.y * GetSectionCoefficient(yawPitchRoll.z);
-	
 
 		ApplyForceRelativeToBodyDirection(force, yawPitchRoll);
 	}

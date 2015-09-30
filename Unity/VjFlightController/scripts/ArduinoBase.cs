@@ -17,8 +17,6 @@ public class ArduinoBase : MonoBehaviour {
 			return ret;
 
 		lock (_serialPort) {
-			_serialPort.DiscardInBuffer();
-			_serialPort.DiscardOutBuffer();
 			_serialPort.Write (datatype + "");
 			message = _serialPort.ReadLine();
 		}
@@ -34,7 +32,7 @@ public class ArduinoBase : MonoBehaviour {
 
 	protected void InitSerial() {
 		// Create a new SerialPort object.
-		_serialPort = new SerialPort (comPortName, 250000);
+		_serialPort = new SerialPort (comPortName, 112500);
 		_serialPort.ReadTimeout = _SerialReadTimeout;
 		_serialPort.Open ();
 		_rigidBody = GetComponent<Rigidbody>();
