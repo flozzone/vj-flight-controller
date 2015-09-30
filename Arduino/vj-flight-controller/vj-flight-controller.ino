@@ -46,13 +46,11 @@ THE SOFTWARE.
 #include "I2Cdev.h"
 
 #include "MPU6050_6Axis_MotionApps20.h"
-//#include "MPU6050.h" // not necessary if using MotionApps include file
 
-// Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
-// is used in I2Cdev.h
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+// Arduino Wire library
 #include "Wire.h"
-#endif
+// Watchdog timer
+#include <avr/wdt.h>
 
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -141,18 +139,22 @@ void sendData() {
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
+void enableWatchdog() {
+  // Watchdog - TODO: Lower
+  wdt_disable();
+  delay(2L * 1000L);
+  wdt_enable(WDTO_4S);
+}
 
 void setup() {
-  // join I2C bus (I2Cdev library doesn't do this automatically)
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  enableWatchdog();
+
+  // join I2C bus
   Wire.begin();
   TWBR = 24; // 400kHz I2C clock (200kHz if CPU is 8MHz)
-#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-  Fastwire::setup(400, true);
-#endif
 
   // initialize serial communication
-  Serial.begin(250000);
+  Serial.begin(115200);
 
   // initialize device
   Serial.println(F("Initializing I2C devices..."));
@@ -240,4 +242,6 @@ void loop() {
   }
 
   sendData();
+
+  wdt_reset();
 }
