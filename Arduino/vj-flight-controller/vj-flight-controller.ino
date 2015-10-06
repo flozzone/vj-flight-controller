@@ -205,11 +205,14 @@ void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
 
+  Serial.println();
   mpuIntStatus = mpu.getIntStatus();
-
+  Serial.print("0"); // |||
   // get current FIFO count
   fifoCount = mpu.getFIFOCount();
-
+  Serial.print("\t");
+  Serial.print(fifoCount);
+  Serial.print("\t");
   // check for overflow (this should never happen unless our code is too inefficient)
   if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
     Serial.println(F("FIFO overflow!"));
@@ -218,24 +221,31 @@ void loop() {
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
   } else if (mpuIntStatus & 0x02) {
     // wait for correct available data length, should be a VERY short wait
-    while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
-
+    while (fifoCount < packetSize) { 
+      Serial.print("2"); // ||
+      fifoCount = mpu.getFIFOCount();
+    }
+    Serial.print("3");
     // read a packet from FIFO
     mpu.getFIFOBytes(fifoBuffer, packetSize);
-
+    Serial.print("4");
     // track FIFO count here in case there is > 1 packet available
     // (this lets us immediately read more without waiting for an interrupt)
     fifoCount -= packetSize;
-
+    Serial.print("5");
     // Get Euler angles in degrees and Acceleration in world-frame
     mpu.dmpGetQuaternion(&q, fifoBuffer);
     mpu.dmpGetAccel(&aa, fifoBuffer);
+    Serial.print("6");
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+    Serial.print("7");
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+    Serial.print("8");
   }
 
+  Serial.print("9");
   // blink LED to indicate activity
   blinkState = !blinkState;
   digitalWrite(LED_PIN, blinkState);
