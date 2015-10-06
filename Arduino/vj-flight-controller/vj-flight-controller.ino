@@ -175,6 +175,7 @@ void setup() {
 
     // get expected DMP packet size for later comparison
     packetSize = mpu.dmpGetFIFOPacketSize();
+    mpu.resetFIFO();
   } else {
     // ERROR!
     // 1 = initial memory load failed
@@ -234,6 +235,7 @@ void loop() {
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
     mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
     mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+    mpu.resetFIFO();
   }
 
   // blink LED to indicate activity
