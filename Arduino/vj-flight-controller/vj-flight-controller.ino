@@ -99,6 +99,7 @@ float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
 
+int loopCount;
 // ================================================================
 // ===                      Helper                              ===
 // ================================================================
@@ -142,7 +143,7 @@ void sendData() {
   char command;
 
   if (Serial.available()) {
-    command = Serial.read();
+    command = 'g';//Serial.read();
     switch (command) {
       case 'i':
         Serial.println("i\ttrue");
@@ -228,7 +229,7 @@ void setup() {
 
   // Lower to 60msec
   wdt_disable();
-  wdt_enable(WDTO_60MS);
+  //wdt_enable(WDTO_60MS);
 }
 
 
@@ -241,7 +242,9 @@ void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
 
-  readData();
+//  if (loopCount == 0)
+    readData();
+//  loopCount = (loopCount + 1) % 10;
 
   // blink LED to indicate activity
   blinkState = !blinkState;
