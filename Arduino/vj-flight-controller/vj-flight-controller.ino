@@ -226,7 +226,7 @@ void setup() {
 
   while (Serial.available() && Serial.read()); // empty buffer
 
-  // Lower to 500msec
+  // Lower to 60msec
   wdt_disable();
   wdt_enable(WDTO_60MS);
 }
