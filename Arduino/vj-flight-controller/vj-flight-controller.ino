@@ -118,13 +118,14 @@ void checkFifo() {
 }
 
 void readData() {
+  mpuIntStatus = mpu.getIntStatus();
+
   if (mpuIntStatus & 0x02) {
+    checkFifo();
     // read a packet from FIFO
     mpu.getFIFOBytes(fifoBuffer, packetSize);
 
-    // track FIFO count here in case there is > 1 packet available
-    // (this lets us immediately read more without waiting for an interrupt)
-    //fifoCount -= packetSize;
+    // TODO: Read the lastmost packet from FIFO
 
     // Get Euler angles in degrees and Acceleration in world-frame
     mpu.dmpGetQuaternion(&q, fifoBuffer);
@@ -239,10 +240,6 @@ void setup() {
 void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
-
-  mpuIntStatus = mpu.getIntStatus();
-
-  checkFifo();
 
   readData();
 
