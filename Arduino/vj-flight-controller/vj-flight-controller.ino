@@ -124,10 +124,10 @@ void readData() {
     checkFifo();
 
     // Read all packets from FIFO and kepp last
-    while (fifoCount > packetSize) {
+    do {
       mpu.getFIFOBytes(fifoBuffer, packetSize);
       fifoCount -= packetSize;
-    }
+    } while (fifoCount > packetSize);
 
     // Get Euler angles in degrees and Acceleration in world-frame
     mpu.dmpGetQuaternion(&q, fifoBuffer);
