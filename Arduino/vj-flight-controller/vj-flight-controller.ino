@@ -79,6 +79,7 @@ MPU6050 mpu;
 
 
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
+#define JETPACK_PIN 3
 bool blinkState = false;
 
 // MPU control/status vars
@@ -165,6 +166,10 @@ void sendData() {
         Serial.print("\t");
         Serial.println(aaWorld.z);
         break;
+      case 'j':
+        Serial.print("j\t");
+        Serial.println(!digitalRead(JETPACK_PIN)); // pin low -> pressed
+        break;
       default:
         Serial.print("ERROR - Command ");
         Serial.print(command);
@@ -222,6 +227,10 @@ void setup() {
     Serial.print(devStatus);
     Serial.println(F(")"));
   }
+
+  // Setup Jetpack button
+  pinMode(JETPACK_PIN, INPUT);
+  digitalWrite(JETPACK_PIN, HIGH); // connect internal pull-up
 
   // configure LED for output
   pinMode(LED_PIN, OUTPUT);
