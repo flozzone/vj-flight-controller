@@ -144,7 +144,7 @@ void readData() {
 void sendData() {
   char command;
 
-  if (Serial.available()) {
+  while (Serial.available()) {
     command = Serial.read();
     switch (command) {
       case 'i':
