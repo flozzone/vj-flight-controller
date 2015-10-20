@@ -13,7 +13,6 @@ public class ArduinoGyro : ArduinoBase {
 	private float YAW_STEER_SCALER = 0.01f;
 
 	public bool _aerodynamics = true;
-	public bool _steerWithYaw = true;
 	public GameObject _controlOrientation;
 	public GameObject _controlPosition;
 		
@@ -49,6 +48,7 @@ public class ArduinoGyro : ArduinoBase {
 	private Vector3 GetXzVelocity() {
 		Vector3 velocity = GetRigidBody().velocity;
 		velocity.y = 0;
+		velocity = _controlPosition.transform.InverseTransformDirection(velocity);
 		return velocity;
 	}
 
@@ -62,6 +62,7 @@ public class ArduinoGyro : ArduinoBase {
 
 	void FixedUpdate() {
 		Vector3 yawPitchRoll = Vector3.zero;
+		Vector3 xzVelocity = Vector3.zero;
 
 		// Apply orientation to the object
 		yawPitchRoll = ParseYawPitchRoll(RequestDataFromArduino('g'));
@@ -77,13 +78,16 @@ public class ArduinoGyro : ArduinoBase {
 			_controlOrientation.transform.localEulerAngles = yawPitchRoll;
 
 		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
+		xzVelocity = GetXzVelocity();
 		_cubeRotation.y += yawPitchRoll.y * YAW_STEER_SCALER;
 		_controlPosition.transform.localEulerAngles = _cubeRotation;
 
+		xzVelocity = _controlPosition.transform.TransformVector(xzVelocity);
+		xzVelocity.y = GetRigidBody().velocity.y;
+		GetRigidBody().velocity = xzVelocity;
+
 		// Apply forces
 		ApplyJetpackForce(yawPitchRoll);
-		if (_steerWithYaw)
-			ApplySteerWithYaw(yawPitchRoll);
 		if (_aerodynamics)
 			ApplyAerodynamicForce(yawPitchRoll);
 	}
@@ -92,16 +96,6 @@ public class ArduinoGyro : ArduinoBase {
 		Vector3 directional_Force = _controlOrientation.transform.InverseTransformDirection(force);
 		directional_Force.z *= -1;
 		this.GetRigidBody().AddForce(directional_Force);
-	}
-
-	private void ApplySteerWithYaw(Vector3 yawPitchRoll) {
-		Vector3 force = Vector3.zero;
-		Vector3 xzVelocity = GetXzVelocity();
-
-		// Fly curve on Yaw
-		force.x += AERODYNAMICS_FORCE_SCALER * xzVelocity.magnitude * Mathf.Sin(yawPitchRoll.y / RAD_TO_DEG);
-		
-		ApplyForceRelativeToBodyDirection(force, yawPitchRoll);
 	}
 
 	private void ApplyAerodynamicForce(Vector3 yawPitchRoll) {
