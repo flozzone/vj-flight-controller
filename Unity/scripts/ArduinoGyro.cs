@@ -40,6 +40,12 @@ public class ArduinoGyro : ArduinoBase {
 		return ret;
 	}
 
+	private bool ParseJetPack(string[] messageParts) {
+		if (messageParts.Length == 2 && "j".Equals(messageParts[0]))
+			return "1".Equals(messageParts[1]);
+		return false;
+	}
+
 	private Vector3 GetXzVelocity() {
 		Vector3 velocity = GetRigidBody().velocity;
 		velocity.y = 0;
@@ -113,7 +119,8 @@ public class ArduinoGyro : ArduinoBase {
 	private void ApplyJetpackForce(Vector3 yawPitchRoll) {
 		Vector3 force = new Vector3(0, 0, -JETPACK_FORCE);
 
-		if (Input.GetKey(KeyCode.Space))
-			ApplyForceRelativeToBodyDirection(force, yawPitchRoll);
+		if (ParseJetPack(RequestDataFromArduino('j'))) {
+				ApplyForceRelativeToBodyDirection(force, yawPitchRoll);
+		}
 	}
 }
