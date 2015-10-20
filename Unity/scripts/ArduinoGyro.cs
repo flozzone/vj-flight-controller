@@ -60,6 +60,12 @@ public class ArduinoGyro : ArduinoBase {
 			_initialOrientation = ParseYawPitchRoll(RequestDataFromArduino('g'));
 	}
 
+	private void Reset(Vector3 currentYawPitchRoll) {
+		_initialOrientation = _initialOrientation + currentYawPitchRoll;
+		_controlPosition.transform.eulerAngles = Vector3.zero;
+		_cubeRotation = Vector3.zero;
+	}
+
 	void FixedUpdate() {
 		Vector3 yawPitchRoll = Vector3.zero;
 		Vector3 xzVelocity = Vector3.zero;
@@ -70,9 +76,7 @@ public class ArduinoGyro : ArduinoBase {
 			return;
 
 		if (Input.GetKeyDown(KeyCode.R)) {
-			_initialOrientation = _initialOrientation + yawPitchRoll;
-			_controlPosition.transform.eulerAngles = Vector3.zero;
-			_cubeRotation = Vector3.zero;
+			Reset(yawPitchRoll);
 			yawPitchRoll = Vector3.zero;
 		} else
 			_controlOrientation.transform.localEulerAngles = yawPitchRoll;
