@@ -29,8 +29,8 @@ public class ArduinoGyro : ArduinoBase {
 		if (messageParts.Length == 4 && "g".Equals(messageParts[0])) {
 			ret = new Vector3 (
 				float.Parse (messageParts [2]),
-				float.Parse (messageParts [1]),
-				float.Parse (messageParts [3])
+				-float.Parse (messageParts [1]),
+				-float.Parse (messageParts [3])
 			);
 
 			return ret - _initialOrientation;
@@ -98,7 +98,6 @@ public class ArduinoGyro : ArduinoBase {
 
 	protected void ApplyForceRelativeToBodyDirection(Vector3 force, Vector3 yawPitchRoll) {
 		Vector3 directional_Force = _controlOrientation.transform.InverseTransformDirection(force);
-		directional_Force.z *= -1;
 		this.GetRigidBody().AddForce(directional_Force);
 	}
 
@@ -107,7 +106,7 @@ public class ArduinoGyro : ArduinoBase {
 
 		// TODO: Get actual wind direction by using velocity
 		// Move forward on Pitch
-		force.z = AERODYNAMICS_FORCE_SCALER * GetRigidBody().velocity.y * GetSectionCoefficient(yawPitchRoll.x);
+		force.z = -AERODYNAMICS_FORCE_SCALER * GetRigidBody().velocity.y * GetSectionCoefficient(yawPitchRoll.x);
 		// Move sideways on Roll
 		force.x = AERODYNAMICS_FORCE_SCALER * GetRigidBody().velocity.y * GetSectionCoefficient(yawPitchRoll.z);
 
@@ -118,7 +117,7 @@ public class ArduinoGyro : ArduinoBase {
 		Vector3 force = new Vector3(0, 0, -JETPACK_FORCE);
 
 		if (ParseJetPack(RequestDataFromArduino('j'))) {
-				ApplyForceRelativeToBodyDirection(force, yawPitchRoll);
+			this.GetRigidBody().AddForce(_controlOrientation.transform.forward * JETPACK_FORCE);
 		}
 	}
 }
