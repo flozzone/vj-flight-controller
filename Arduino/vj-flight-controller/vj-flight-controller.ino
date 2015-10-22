@@ -52,33 +52,11 @@ THE SOFTWARE.
 // Watchdog timer
 #include <avr/wdt.h>
 
-// class default I2C address is 0x68
-// specific I2C addresses may be passed as a parameter here
-// AD0 low = 0x68 (default for SparkFun breakout and InvenSense evaluation board)
-// AD0 high = 0x69
+// Instanciate MPU on address 0x68 (ADD low)
 MPU6050 mpu;
-//MPU6050 mpu(0x69); // <-- use for AD0 high
-
-/* =========================================================================
-   NOTE: In addition to connection 3.3v, GND, SDA, and SCL, this sketch
-   depends on the MPU-6050's INT pin being connected to the Arduino's
-   external interrupt #0 pin. On the Arduino Uno and Mega 2560, this is
-   digital I/O pin 2.
- * ========================================================================= */
-
-/* =========================================================================
-   NOTE: Arduino v1.0.1 with the Leonardo board generates a compile error
-   when using Serial.write(buf, len). The Teapot output uses this method.
-   The solution requires a modification to the Arduino USBAPI.h file, which
-   is fortunately simple, but annoying. This will be fixed in the next IDE
-   release. For more info, see these links:
-
-   http://arduino.cc/forum/index.php/topic,109987.0.html
-   http://code.google.com/p/arduino/issues/detail?id=958
- * ========================================================================= */
 
 
-#define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
+#define LED_PIN 13
 #define JETPACK_PIN 3
 bool blinkState = false;
 
@@ -124,13 +102,13 @@ void readData() {
   if (mpuIntStatus & 0x02) {
     checkFifo();
 
-    // Read all packets from FIFO and kepp last
+    // Read all packets from FIFO and keep last
     do {
       mpu.getFIFOBytes(fifoBuffer, packetSize);
       fifoCount -= packetSize;
     } while (fifoCount > packetSize);
 
-    // Get Euler angles in degrees and Acceleration in world-frame
+    // Get Euler angles in radiants and Acceleration in world-frame
     mpu.dmpGetQuaternion(&q, fifoBuffer);
     mpu.dmpGetAccel(&aa, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
@@ -198,17 +176,14 @@ void setup() {
   mpu.initialize();
 
   // verify connection
-  Serial.println(F("Testing device connections..."));
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
   // load and configure the DMP
-  Serial.println(F("Initializing DMP..."));
   devStatus = mpu.dmpInitialize();
 
   // make sure it worked (returns 0 if so)
   if (devStatus == 0) {
     // turn on the DMP, now that it's ready
-    Serial.println(F("Enabling DMP..."));
     mpu.setDMPEnabled(true);
 
     // set our DMP Ready flag so the main loop() function knows it's okay to use it
@@ -237,17 +212,14 @@ void setup() {
 
   while (Serial.available() && Serial.read()); // empty buffer
 
-  // Lower to 60msec
+  // Lower Watchdog to 60msec
   wdt_disable();
   wdt_enable(WDTO_60MS);
 }
 
-
-
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
-
 void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
