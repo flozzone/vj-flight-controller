@@ -13,6 +13,8 @@ public class ArduinoGyro : ArduinoBase {
 	private float YAW_STEER_SCALER = 0.01f;
 
 	public bool _aerodynamics = true;
+	public bool _jetpack = false;
+	public bool _steerWithYaw = true;
 	public GameObject _controlOrientation;
 	public GameObject _controlPosition;
 		
@@ -82,14 +84,17 @@ public class ArduinoGyro : ArduinoBase {
 			_controlOrientation.transform.localEulerAngles = yawPitchRoll;
 
 		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
-		_cubeRotation.y += yawPitchRoll.y * YAW_STEER_SCALER;
-		_controlPosition.transform.localEulerAngles = _cubeRotation;
+		if (_steerWithYaw) {
+			_cubeRotation.y += yawPitchRoll.y * YAW_STEER_SCALER;
+			_controlPosition.transform.localEulerAngles = _cubeRotation;
+		}
 
 		// Always fly frontface
 		GetRigidBody().velocity = _controlOrientation.transform.forward * GetRigidBody().velocity.magnitude;
 
 		// Apply forces
-		ApplyJetpackForce(yawPitchRoll);
+		if (_jetpack)
+			ApplyJetpackForce(yawPitchRoll);
 		if (_aerodynamics)
 			ApplyAerodynamicForce(yawPitchRoll);
 	}
@@ -114,7 +119,7 @@ public class ArduinoGyro : ArduinoBase {
 	private void ApplyJetpackForce(Vector3 yawPitchRoll) {
 		Vector3 force = new Vector3(0, 0, -JETPACK_FORCE);
 
-		if (ParseJetPack(RequestDataFromArduino('j'))) {
+		if (ParseJetPack(RequestDataFromArduino('j')) | _jetpack) {
 			this.GetRigidBody().AddForce(_controlOrientation.transform.forward * JETPACK_FORCE);
 		}
 	}
