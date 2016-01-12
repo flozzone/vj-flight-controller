@@ -41,6 +41,10 @@ public class ArduinoGyro : ArduinoBase {
 		return ret;
 	}
 
+	private Vector3 ReadYawPitchRollFromArduino() {
+		return ParseYawPitchRoll(RequestDataFromArduino('g'));
+	}
+
 	private bool ParseJetPack(string[] messageParts) {
 		if (messageParts.Length == 2 && "j".Equals(messageParts[0]))
 			return "1".Equals(messageParts[1]);
@@ -59,7 +63,7 @@ public class ArduinoGyro : ArduinoBase {
 
 		//Save initial orientation
 		while (_initialOrientation.Equals(INVALID_VALUE))
-			_initialOrientation = ParseYawPitchRoll(RequestDataFromArduino('g'));
+			_initialOrientation = ReadYawPitchRollFromArduino();
 	}
 
 	private void Reset(Vector3 currentYawPitchRoll) {
@@ -73,7 +77,7 @@ public class ArduinoGyro : ArduinoBase {
 		Vector3 xzVelocity = Vector3.zero;
 
 		// Apply orientation to the object
-		yawPitchRoll = ParseYawPitchRoll(RequestDataFromArduino('g'));
+		yawPitchRoll = ReadYawPitchRollFromArduino();
 		if (yawPitchRoll.Equals(INVALID_VALUE))
 			return;
 
