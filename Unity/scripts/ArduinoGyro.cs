@@ -82,13 +82,11 @@ public class ArduinoGyro : ArduinoBase {
 			_controlOrientation.transform.localEulerAngles = yawPitchRoll;
 
 		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
-		xzVelocity = GetXzVelocity();
 		_cubeRotation.y += yawPitchRoll.y * YAW_STEER_SCALER;
 		_controlPosition.transform.localEulerAngles = _cubeRotation;
 
-		xzVelocity = _controlPosition.transform.TransformVector(xzVelocity);
-		xzVelocity.y = GetRigidBody().velocity.y;
-		GetRigidBody().velocity = xzVelocity;
+		// Always fly frontface
+		GetRigidBody().velocity = _controlOrientation.transform.forward * GetRigidBody().velocity.magnitude;
 
 		// Apply forces
 		ApplyJetpackForce(yawPitchRoll);
