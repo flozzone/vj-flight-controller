@@ -21,6 +21,8 @@ public class ArduinoGyro : ArduinoBase {
 	private Vector3 _initialOrientation = INVALID_VALUE;
 	private Vector3 _cubeRotation = Vector3.zero;
 
+	private Quaternion _initialQuaternion = Quaternion.identity;
+
 	protected float GetSectionCoefficient (float orientationDegrees) {
 		return (Mathf.Sin (orientationDegrees / RAD_TO_DEG)) / (Mathf.Cos (orientationDegrees / RAD_TO_DEG));
 	}
@@ -41,8 +43,29 @@ public class ArduinoGyro : ArduinoBase {
 		return ret;
 	}
 
+	private Quaternion ParseQuaternion(string[] messageParts) {
+		Quaternion ret = Quaternion.identity;
+
+		if (messageParts.Length == 5 && "q".Equals(messageParts[0])) {
+			ret = new Quaternion (
+				float.Parse (messageParts [2]),
+				float.Parse (messageParts [3]),
+				float.Parse (messageParts [4]),
+				float.Parse (messageParts [1])
+				);
+
+			return ret * _initialQuaternion;
+		}
+
+		return ret;
+	}
+
 	private Vector3 ReadYawPitchRollFromArduino() {
 		return ParseYawPitchRoll(RequestDataFromArduino('g'));
+	}
+
+	private Quaternion ReadQuaternionFromArduino() {
+		return ParseQuaternion(RequestDataFromArduino('q'));
 	}
 
 	private bool ParseJetPack(string[] messageParts) {

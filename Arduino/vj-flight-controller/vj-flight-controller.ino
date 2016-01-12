@@ -144,6 +144,16 @@ void sendData() {
         Serial.print("\t");
         Serial.println(aaWorld.z);
         break;
+      case 'q':
+        Serial.print("q\t");
+        Serial.print(q.w * 100);
+        Serial.print("\t");
+        Serial.print(q.x * 100);
+        Serial.print("\t");
+        Serial.print(q.y * 100);
+        Serial.print("\t");
+        Serial.println(q.z * 100);
+        break;
       case 'j':
         Serial.print("j\t");
         Serial.println(!digitalRead(JETPACK_PIN)); // pin low -> pressed
