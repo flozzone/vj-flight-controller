@@ -3,9 +3,6 @@ using System.Collections;
 using System.IO.Ports;
 
 public class ArduinoBase : MonoBehaviour {	
-	public string comPortName;
-	public int _SerialReadTimeout = 10;
-	
 	private SerialPort _serialPort;
 	private Rigidbody _rigidBody;
 
@@ -31,9 +28,13 @@ public class ArduinoBase : MonoBehaviour {
 	}
 
 	protected void InitSerial() {
+		ArduinoSettings settings = ArduinoSettingsParser.parseSettings();
+
+		Debug.Log("Got settings: " + settings.SerialPort + " " + settings.ReadTimeout);
+
 		// Create a new SerialPort object.
-		_serialPort = new SerialPort (comPortName, 115200);
-		_serialPort.ReadTimeout = _SerialReadTimeout;
+		_serialPort = new SerialPort (settings.SerialPort, 115200);
+		_serialPort.ReadTimeout = settings.ReadTimeout;
 		_serialPort.Open ();
 		_rigidBody = GetComponent<Rigidbody>();
 	}
