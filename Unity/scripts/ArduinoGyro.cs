@@ -61,11 +61,11 @@ public class ArduinoGyro : ArduinoBase {
 	}
 
 	private Vector3 ReadYawPitchRollFromArduino() {
-		return ParseYawPitchRoll(RequestDataFromArduino('g'));
+		return ParseYawPitchRoll(GetBufferedMessage("g"));
 	}
 
 	private Quaternion ReadQuaternionFromArduino() {
-		return ParseQuaternion(RequestDataFromArduino('q'));
+		return ParseQuaternion(GetBufferedMessage("q"));
 	}
 
 	private bool ParseJetPack(string[] messageParts) {
@@ -81,8 +81,8 @@ public class ArduinoGyro : ArduinoBase {
 		return velocity;
 	}
 
-	void Start() {
-		base.InitSerial();
+	new void Start() {
+		base.Start();
 
 		//Save initial orientation
 		while (_initialOrientation.Equals(INVALID_VALUE))
@@ -146,7 +146,7 @@ public class ArduinoGyro : ArduinoBase {
 	private void ApplyJetpackForce(Vector3 yawPitchRoll) {
 		Vector3 force = new Vector3(0, 0, -JETPACK_FORCE);
 
-		if (ParseJetPack(RequestDataFromArduino('j')) | _jetpack) {
+		if (ParseJetPack(GetBufferedMessage("j")) | _jetpack) {
 			this.GetRigidBody().AddForce(_controlOrientation.transform.forward * JETPACK_FORCE);
 		}
 	}
