@@ -19,7 +19,8 @@ public class ArduinoGyro : ArduinoBase {
 	public bool _steerWithYaw = true;
 	public GameObject _controlOrientation;
 	public GameObject _controlPosition;
-		
+
+	private bool _isInverted = false;
 	private Vector3 _initialOrientation = INVALID_VALUE;
 	private Vector3 _cubeRotation = Vector3.zero;
 
@@ -86,6 +87,8 @@ public class ArduinoGyro : ArduinoBase {
 	new void Start() {
 		base.Start();
 
+		this.SetInverted(false);
+
 		//Save initial orientation
 		while (_initialOrientation.Equals(INVALID_VALUE))
 			_initialOrientation = ReadYawPitchRollFromArduino();
@@ -132,10 +135,17 @@ public class ArduinoGyro : ArduinoBase {
 		*/
 	}
 
+	public void SetInverted(bool inverted) {
+		this._isInverted = inverted;
+	}
+
 	protected void ApplyLeftRightForce(float rollAngle) {
 		float magnitude = rollAngle * LEFT_RIGHT_SCALER;
 
 		Debug.Log(magnitude);
+
+		if (this._isInverted)
+			magnitude = -magnitude;
 
 		Vector3 pos = _controlPosition.transform.position;
 		pos.z += magnitude;
