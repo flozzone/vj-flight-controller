@@ -20,6 +20,8 @@ public class ArduinoGyro : ArduinoBase {
 	public GameObject _controlOrientation;
 	public GameObject _controlPosition;
 
+	private ServoControllerClient _servoController = null;
+
 	private bool _isInverted = false;
 	private Vector3 _initialOrientation = INVALID_VALUE;
 	private Vector3 _cubeRotation = Vector3.zero;
@@ -86,6 +88,7 @@ public class ArduinoGyro : ArduinoBase {
 
 	new void Start() {
 		base.Start();
+		this._servoController = new ServoControllerClient();
 
 		this.SetInverted(false);
 
@@ -135,6 +138,10 @@ public class ArduinoGyro : ArduinoBase {
 		*/
 	}
 
+	void OnDestroy() {
+		this._servoController.Close();
+	}
+
 	public void SetInverted(bool inverted) {
 		this._isInverted = inverted;
 	}
@@ -146,6 +153,11 @@ public class ArduinoGyro : ArduinoBase {
 
 		if (this._isInverted)
 			magnitude = -magnitude;
+
+		if (magnitude < 0)
+			_servoController.PullToLeft();
+		else
+			_servoController.PullToRight();
 
 		Vector3 pos = _controlPosition.transform.position;
 		pos.z += magnitude;
