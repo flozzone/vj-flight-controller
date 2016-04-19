@@ -8,6 +8,8 @@ public class ArduinoGyro : ArduinoBase {
 	public const float RAD_TO_DEG = 180f / Mathf.PI;
 	public static Vector3 INVALID_VALUE = Vector3.zero;
 
+	public float LEFT_RIGHT_SCALER = 0.05f;
+
 	private float JETPACK_FORCE = 10f;
 	private float AERODYNAMICS_FORCE_SCALER = 0.1f;
 	private float YAW_STEER_SCALER = 0.01f;
@@ -108,6 +110,9 @@ public class ArduinoGyro : ArduinoBase {
 			Reset(yawPitchRoll);
 			yawPitchRoll = Vector3.zero;
 		} else
+			ApplyLeftRightForce(yawPitchRoll.z);
+
+		/*else
 			_controlOrientation.transform.localEulerAngles = yawPitchRoll;
 
 		// Rotate container to front-face flight direction in X-Z plane as player doesn't move in it.
@@ -124,6 +129,17 @@ public class ArduinoGyro : ArduinoBase {
 			ApplyJetpackForce(yawPitchRoll);
 		if (_aerodynamics)
 			ApplyAerodynamicForce(yawPitchRoll);
+		*/
+	}
+
+	protected void ApplyLeftRightForce(float rollAngle) {
+		float magnitude = rollAngle * LEFT_RIGHT_SCALER;
+
+		Debug.Log(magnitude);
+
+		Vector3 pos = _controlPosition.transform.position;
+		pos.z += magnitude;
+		_controlPosition.transform.position = pos;
 	}
 
 	protected void ApplyForceRelativeToBodyDirection(Vector3 force, Vector3 yawPitchRoll) {
