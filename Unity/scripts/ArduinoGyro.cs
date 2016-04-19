@@ -9,6 +9,7 @@ public class ArduinoGyro : ArduinoBase {
 	public static Vector3 INVALID_VALUE = Vector3.zero;
 
 	public float LEFT_RIGHT_SCALER = 0.05f;
+	public float SERVO_POSITION_SCALER = 30f;
 
 	private float JETPACK_FORCE = 10f;
 	private float AERODYNAMICS_FORCE_SCALER = 0.1f;
@@ -148,16 +149,21 @@ public class ArduinoGyro : ArduinoBase {
 
 	protected void ApplyLeftRightForce(float rollAngle) {
 		float magnitude = rollAngle * LEFT_RIGHT_SCALER;
+		int servoPosition = (int)Mathf.Round(512 + magnitude * SERVO_POSITION_SCALER);
 
 		Debug.Log(magnitude);
 
 		if (this._isInverted)
 			magnitude = -magnitude;
 
+		/*
 		if (magnitude < 0)
 			_servoController.PullToLeft();
 		else
 			_servoController.PullToRight();
+		*/
+
+		_servoController.EventSetServoPosition(servoPosition);
 
 		Vector3 pos = _controlPosition.transform.position;
 		pos.z += magnitude;
