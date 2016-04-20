@@ -139,7 +139,8 @@ public class ArduinoGyro : ArduinoBase {
 		*/
 	}
 
-	void OnDestroy() {
+	new public void OnDestroy() {
+		base.OnDestroy();
 		this._servoController.Close();
 	}
 
