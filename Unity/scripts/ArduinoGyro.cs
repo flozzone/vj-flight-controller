@@ -98,6 +98,7 @@ public class ArduinoGyro : ArduinoBase {
 
 		this._servoController = new ServoControllerClient();
 		this.SetInverted(false);
+		this._servoController.EventEnable();
 	}
 
 	private void Reset(Vector3 currentYawPitchRoll) {
@@ -155,6 +156,10 @@ public class ArduinoGyro : ArduinoBase {
 
 	public void SetInverted(bool inverted) {
 		this._isInverted = inverted;
+	}
+
+	public void DisableServo() {
+		this._servoController.EventStop();
 	}
 
 	protected void ApplyLeftRightForce(float rollAngle) {
