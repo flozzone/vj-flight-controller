@@ -24,6 +24,7 @@ public class ArduinoGyro : ArduinoBase {
 	private ServoControllerClient _servoController = null;
 
 	private bool _isInverted = false;
+	private bool _isEnabled = false;
 	private Vector3 _initialOrientation = INVALID_VALUE;
 	private Vector3 _cubeRotation = Vector3.zero;
 
@@ -118,7 +119,10 @@ public class ArduinoGyro : ArduinoBase {
 			Reset(yawPitchRoll);
 			yawPitchRoll = Vector3.zero;
 		} else
-			ApplyLeftRightForce(yawPitchRoll.z);
+			if (_isEnabled)
+				ApplyLeftRightForce(yawPitchRoll.z);
+			else
+				_servoController.EventSetServoPosition(512);
 
 		/*else
 			_controlOrientation.transform.localEulerAngles = yawPitchRoll;
@@ -138,6 +142,10 @@ public class ArduinoGyro : ArduinoBase {
 		if (_aerodynamics)
 			ApplyAerodynamicForce(yawPitchRoll);
 		*/
+	}
+
+	public void setControlEnabled(bool enabled) {
+		this._isEnabled = enabled;
 	}
 
 	new public void OnDestroy() {
