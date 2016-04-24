@@ -89,8 +89,13 @@ public class ArduinoGyro : ArduinoBase {
 
 	new void Start() {
 		base.Start();
-		this._servoController = new ServoControllerClient();
 
+		GyroSettings gyroSettings = GyroSettingsParser.parseSettings();
+		this.LEFT_RIGHT_SCALER = gyroSettings.RollSensitivity;
+
+		base.InitSerial(gyroSettings);
+
+		this._servoController = new ServoControllerClient();
 		this.SetInverted(false);
 
 		//Save initial orientation

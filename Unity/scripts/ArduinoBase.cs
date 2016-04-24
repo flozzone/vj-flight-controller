@@ -42,24 +42,20 @@ public class ArduinoBase : MonoBehaviour {
 	}
 
 	public void Start() {
-		InitSerial();
-
 		_rigidBody = GetComponent<Rigidbody>();
-
-		// Spawn thread to read from Arduino
-		_serialThread = new Thread(_readSerial);
-		_serialThread.Start();
 	}
 
-	protected void InitSerial() {
-		ArduinoSettings settings = ArduinoSettingsParser.parseSettings();
-
-		Debug.Log("Got settings: " + settings.SerialPort + " " + settings.ReadTimeout);
+	protected void InitSerial(ArduinoSettings settings) {
+		Debug.Log("[ArduinoBase] Got settings: " + serialPort + " " + readTimeout);
 
 		// Create a new SerialPort object.
 		_serialPort = new SerialPort (settings.SerialPort, 115200);
 		_serialPort.ReadTimeout = settings.ReadTimeout;
 		_serialPort.Open ();
+
+		// Spawn thread to read from Arduino
+		_serialThread = new Thread(_readSerial);
+		_serialThread.Start();
 	}
 
 	private void _readSerial() {

@@ -1,4 +1,5 @@
 ﻿{
 	"_serialPort": "COM4",
-	"_readTimeout": 100
+	"_readTimeout": 100,
+	"_rollSensitivity": 0.05
 }
