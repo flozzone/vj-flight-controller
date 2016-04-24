@@ -97,10 +97,6 @@ public class ArduinoGyro : ArduinoBase {
 
 		this._servoController = new ServoControllerClient();
 		this.SetInverted(false);
-
-		//Save initial orientation
-		while (_initialOrientation.Equals(INVALID_VALUE))
-			_initialOrientation = ReadYawPitchRollFromArduino();
 	}
 
 	private void Reset(Vector3 currentYawPitchRoll) {
