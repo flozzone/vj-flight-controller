@@ -10,7 +10,7 @@ public class ArduinoSettingsParser {
 }
 
 [System.Serializable]
-public struct ArduinoSettings {
+public class ArduinoSettings {
 	[SerializeField]
 	private string _serialPort;
 	[SerializeField]

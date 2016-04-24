@@ -1,3 +1,6 @@
+using UnityEngine;
+using System.IO;
+
 public class GyroSettingsParser {
 	private static readonly string GYRO_SETTINGS_FILE = "gyroSettings.json";
 
@@ -7,7 +10,7 @@ public class GyroSettingsParser {
 }
 
 [System.Serializable]
-public struct GyroSettings : ArduinoSettings {
+public class GyroSettings : ArduinoSettings {
 	[SerializeField]
 	private float _rollSensitivity;
 

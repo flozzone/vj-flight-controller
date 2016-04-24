@@ -15,6 +15,7 @@ public class ArduinoBase : MonoBehaviour {
 	private System.Threading.Thread _serialThread = null;
 	private SerialPort _serialPort;
 	private Rigidbody _rigidBody;
+	private ArduinoSettings _serialSettings;
 
 	private Dictionary<string, string[]> _msgBuffer = new Dictionary<string, string[]>();
 
@@ -45,12 +46,14 @@ public class ArduinoBase : MonoBehaviour {
 		_rigidBody = GetComponent<Rigidbody>();
 	}
 
-	protected void InitSerial(ArduinoSettings settings) {
-		Debug.Log("[ArduinoBase] Got settings: " + serialPort + " " + readTimeout);
+	protected void InitSerial(ArduinoSettings settings = null) {
+		if (settings == null)
+			this._serialSettings = settings;
 
+		Debug.Log("[ArduinoBase] Got settings: " + this._serialSettings.SerialPort + " " + this._serialSettings.ReadTimeout);
 		// Create a new SerialPort object.
-		_serialPort = new SerialPort (settings.SerialPort, 115200);
-		_serialPort.ReadTimeout = settings.ReadTimeout;
+		_serialPort = new SerialPort (this._serialSettings.SerialPort, 115200);
+		_serialPort.ReadTimeout = this._serialSettings.ReadTimeout;
 		_serialPort.Open ();
 
 		// Spawn thread to read from Arduino
