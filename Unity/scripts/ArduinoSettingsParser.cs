@@ -21,6 +21,6 @@ public struct ArduinoSettings {
 	}
 
 	public int ReadTimeout {
-		get{return _readTimeout;}
+		get {return _readTimeout;}
 	}
 }
